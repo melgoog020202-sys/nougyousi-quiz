@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 app.secret_key = "quiz-secret"
 
-CSV_URL ="https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ3szC4r4k16N7PI/edit?gid=0#gid=0"
+CSV_URL = "https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ3szC4r4k16N7PI/export?format=csv&gid=0"
 
 df = pd.read_csv(CSV_URL, dtype=str)
 questions = df.fillna("").to_dict(orient="records")
@@ -19,9 +19,10 @@ def load_questions():
 
     return df.fillna("").to_dict(orient="records")
 
+questions = load_questions()
+
 @app.route("/", methods=["GET","POST"])
 def index():
-    questions = load_questions()
     if request.method=="POST" and "start" in request.form:
         rnd = request.form["round"]
         qs=[q.copy() for q in questions if q["回数"]==rnd]
