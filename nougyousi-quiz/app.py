@@ -13,8 +13,6 @@ questions = df.fillna("").to_dict(orient="records")
 
 def load_questions():
 
-    CSV_URL = "https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ3szC4r4k16N7PI/edit?gid=0#gid=0"
-
     df = pd.read_csv(CSV_URL, dtype=str)
 
     return df.fillna("").to_dict(orient="records")
