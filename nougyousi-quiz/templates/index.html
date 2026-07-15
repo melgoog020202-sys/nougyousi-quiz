@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>農業史クイズ</title>
+<style>
+body{font-family:Meiryo,sans-serif;max-width:800px;margin:40px auto;background:#f5f5f5}
+.box{background:#fff;padding:24px;border-radius:10px}
+input,select,button{font-size:16px;padding:8px}
+.msg{margin:12px 0;color:#006400;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>農業史クイズ</h1>
+
+{% if result %}
+<h2>ゲーム終了！</h2>
+{% if message %}<p class="msg">{{ message }}</p>{% endif %}
+<p>最終スコア：{{ score }} 点</p>
+<a href="/">もう一度遊ぶ</a>
+
+{% elif playing %}
+<h3>残り {{ left }} 問</h3>
+<p>スコア：{{ score }} 点</p>
+{% if message %}<p class="msg">{{ message }}</p>{% endif %}
+<p><b>回数：</b>{{ current["回数"] }}</p>
+<p><b>番号：</b>{{ current["番号"] }}</p>
+<p><b>問題</b></p>
+<p>{{ current["問題"] }}</p>
+
+<form method="post">
+<input type="text" name="answer" autofocus required>
+<button type="submit">回答する</button>
+</form>
+
+{% else %}
+<form method="post">
+<label>回数：</label>
+<select name="round">
+{% for r in rounds %}
+<option value="{{r}}">第{{r}}回</option>
+{% endfor %}
+</select>
+<button type="submit" name="start">スタート</button>
+</form>
+{% endif %}
+
+</div>
+</body>
+</html>
