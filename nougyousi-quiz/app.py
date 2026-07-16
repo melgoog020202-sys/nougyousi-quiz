@@ -25,8 +25,9 @@ def index():
     )
 
     if request.method == "POST" and "start" in request.form:
-
+        print(request.form)
         rnd = str(request.form["round"]).strip()
+        print("受け取った回数:", rnd)
 
         qs = [
             q.copy()
