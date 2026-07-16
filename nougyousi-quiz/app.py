@@ -8,72 +8,125 @@ app.secret_key = "quiz-secret"
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ3szC4r4k16N7PI/export?format=csv&gid=0"
 
-df = pd.read_csv(CSV_URL, dtype=str)
-questions = df.fillna("").to_dict(orient="records")
 
 def load_questions():
-
-    CSV_URL = "https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ3szC4r4k16N7PI/export?format=csv&gid=0"
-
     df = pd.read_csv(CSV_URL, dtype=str)
-
     return df.fillna("").to_dict(orient="records")
+
 
 questions = load_questions()
 
-@app.route("/", methods=["GET","POST"])
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    if request.method=="POST" and "start" in request.form:
-        rnd = request.form["round"]
-        qs=[q.copy() for q in questions if q["回数"]==rnd]
+
+    # Googleスプレッドシートから回数一覧を自動取得
+    rounds = sorted(
+        {str(q["回数"]).strip() for q in questions},
+        key=lambda x: int(x)
+    )
+
+    if request.method == "POST" and "start" in request.form:
+
+        rnd = str(request.form["round"]).strip()
+
+        qs = [
+            q.copy()
+            for q in questions
+            if str(q["回数"]).strip() == rnd
+        ]
+
         random.shuffle(qs)
-        session["round"]=rnd
-        session["score"]=0
-        session["total"]=len(qs)
-        session["questions"]=qs
+
+        session["round"] = rnd
+        session["score"] = 0
+        session["correct"] = 0
+        session["wrong"] = 0
+        session["total"] = len(qs)
+        session["questions"] = qs
+
         return redirect(url_for("quiz"))
-    rounds=[str(i) for i in range(1,15)]
-    rounds.append("404")
+
     return render_template("index.html", rounds=rounds)
 
-@app.route("/quiz", methods=["GET","POST"])
+
+@app.route("/quiz", methods=["GET", "POST"])
 def quiz():
+
     if "questions" not in session:
         return redirect(url_for("index"))
-    qs=session["questions"]
-    score=session["score"]
-    session["correct"] = 0
-    session["wrong"] = 0
+
+    qs = session["questions"]
+    score = session["score"]
+
+    rounds = sorted(
+        {str(q["回数"]).strip() for q in questions},
+        key=lambda x: int(x)
+    )
+
     if not qs:
-        return render_template("index.html", rounds=[str(i) for i in range(1,16)],
-                               result=True, score=score, total=session["total"])
-    current=qs[0]
-    if request.method=="POST":
-        ans=request.form["answer"].strip()
-        correct= current["答え"]
-        if ans==correct:
-            score+=5
+        return render_template(
+            "index.html",
+            rounds=rounds,
+            result=True,
+            score=score,
+            total=session["total"],
+            correct=session["correct"],
+            wrong=session["wrong"]
+        )
+
+    current = qs[0]
+
+    if request.method == "POST":
+
+        ans = request.form["answer"].strip()
+        correct_answer = current["答え"].strip()
+
+        if ans == correct_answer:
+            score += 5
+            session["score"] = score
             session["correct"] += 1
-            session["score"]=score
-            msg=f"〇 正解！ 正解：{correct}"
+            msg = f"〇 正解！ 正解：{correct_answer}"
         else:
             session["wrong"] += 1
-            msg=f"× 不正解 正解：{correct}"
+            msg = f"× 不正解　正解：{correct_answer}"
+
         qs.pop(0)
-        session["questions"]=qs
+        session["questions"] = qs
+
         if not qs:
-            return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
-                                                        ],
-                                   result=True, score=score, total=session["total"], message=msg)correct=session["correct"],wrong=session["wrong"]
-            
-        current=qs[0]
-        return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
-                                                    ],
-                               playing=True,current=current,score=score,
-                               left=len(qs),message=msg)
-    return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
-                                                ],
-                           playing=True,current=current,score=score,left=len(qs))
+            return render_template(
+                "index.html",
+                rounds=rounds,
+                result=True,
+                score=score,
+                total=session["total"],
+                correct=session["correct"],
+                wrong=session["wrong"],
+                message=msg
+            )
+
+        current = qs[0]
+
+        return render_template(
+            "index.html",
+            rounds=rounds,
+            playing=True,
+            current=current,
+            score=score,
+            left=len(qs),
+            message=msg
+        )
+
+    return render_template(
+        "index.html",
+        rounds=rounds,
+        playing=True,
+        current=current,
+        score=score,
+        left=len(qs)
+    )
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
