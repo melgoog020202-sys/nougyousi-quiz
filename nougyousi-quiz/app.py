@@ -14,12 +14,11 @@ def load_questions():
     return df.fillna("").to_dict(orient="records")
 
 
-questions = load_questions()
-
-
 @app.route("/", methods=["GET", "POST"])
 def index():
 
+    global questions
+    questions = load_questions()
     # Googleスプレッドシートから回数一覧を自動取得
     rounds = sorted(
         {str(q["回数"]).strip() for q in questions},
