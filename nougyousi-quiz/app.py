@@ -114,6 +114,8 @@ def quiz():
             playing=True,
             current=current,
             score=score,
+            correct=session["correct"],
+            wrong=session["wrong"],
             left=len(qs),
             message=msg
         )
@@ -124,6 +126,8 @@ def quiz():
         playing=True,
         current=current,
         score=score,
+        correct=session["correct"],
+        wrong=session["wrong"],
         left=len(qs)
     )
 
