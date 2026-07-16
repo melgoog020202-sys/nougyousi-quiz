@@ -23,7 +23,6 @@ questions = load_questions()
 
 @app.route("/", methods=["GET","POST"])
 def index():
-    print("16は重要そうなやつ")
     if request.method=="POST" and "start" in request.form:
         rnd = request.form["round"]
         qs=[q.copy() for q in questions if q["回数"]==rnd]
@@ -59,13 +58,16 @@ def quiz():
         qs.pop(0)
         session["questions"]=qs
         if not qs:
-            return render_template("index.html", rounds=[str(i) for i in range(1,16)],
+            return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
+                                                        ],
                                    result=True, score=score, total=session["total"], message=msg)
         current=qs[0]
-        return render_template("index.html", rounds=[str(i) for i in range(1,16)],
+        return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
+                                                    ],
                                playing=True,current=current,score=score,
                                left=len(qs),message=msg)
-    return render_template("index.html", rounds=[str(i) for i in range(1,16)],
+    return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
+                                                ],
                            playing=True,current=current,score=score,left=len(qs))
 
 if __name__ == "__main__":
