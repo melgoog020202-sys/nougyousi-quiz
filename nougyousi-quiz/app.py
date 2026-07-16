@@ -8,7 +8,6 @@ app.secret_key = "quiz-secret"
 
 CSV_URL = "https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ3szC4r4k16N7PI/export?format=csv&gid=0"
 
-
 def load_questions():
     df = pd.read_csv(CSV_URL, dtype=str)
     return df.fillna("").to_dict(orient="records")
