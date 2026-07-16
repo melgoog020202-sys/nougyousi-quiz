@@ -18,14 +18,9 @@ input,select,button{font-size:16px;padding:8px}
 {% if result %}
 <h2>ゲーム終了！</h2>
 {% if message %}<p class="msg">{{ message }}</p>{% endif %}
-<h2>ゲーム終了！</h2>
-
 <p>スコア：{{ score }} 点</p>
-
 <p>正解：{{ correct }} 問</p>
-
 <p>不正解：{{ wrong }} 問</p>
-
 <p>正答率：
 {{ (correct / total * 100)|round(1) }}%
 </p>
