@@ -10,173 +10,153 @@ CSV_URL = "https://docs.google.com/spreadsheets/d/1CeOOBmB4URYbQKe0oIhcRmsxp6oFZ
 
 
 def load_questions():
+    """
+    Googleスプレッドシートから問題を取得
+    """
+
     df = pd.read_csv(CSV_URL, dtype=str)
     df = df.fillna("")
 
-    # 回数・番号を文字列として扱う
     df["回数"] = df["回数"].astype(str).str.strip()
     df["番号"] = df["番号"].astype(str).str.strip()
+    df["問題"] = df["問題"].astype(str).str.strip()
+    df["答え"] = df["答え"].astype(str).str.strip()
+
+    # 空行を除去
+    df = df[df["回数"] != ""]
 
     return df.to_dict(orient="records")
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
 
+    # タイトル画面用
+    questions = load_questions()
+
+    rounds = sorted(
+        {q["回数"] for q in questions},
+        key=lambda x: int(x)
+    )
+
     if request.method == "POST":
-
-        questions = load_questions()   # ←ここだけで読む
-
-        rounds = sorted(
-            {q["回数"] for q in questions if q["回数"].strip()},
-            key=int
-        )
 
         rnd = request.form["round"].strip()
 
-        qs = [
+        # 選択した回だけ取得
+        quiz = [
             q.copy()
             for q in questions
             if q["回数"] == rnd
         ]
 
-        random.shuffle(qs)
+        random.shuffle(quiz)
 
         session.clear()
 
+        session["quiz"] = quiz
         session["round"] = rnd
-        session["questions"] = qs      # ←この回だけ保存
         session["score"] = 0
         session["correct"] = 0
         session["wrong"] = 0
+        session["total"] = len(quiz)
 
         return redirect(url_for("quiz"))
 
-    # タイトル画面だけ回数一覧を取得
-    questions = load_questions()
-
-    rounds = sorted(
-        {q["回数"] for q in questions if q["回数"].strip()},
-        key=int
+    return render_template(
+        "index.html",
+        rounds=rounds
     )
-
-    return render_template("index.html", rounds=rounds)
 
 
 @app.route("/quiz", methods=["GET", "POST"])
 def quiz():
 
-    if "round" not in session:
+    if "quiz" not in session:
         return redirect(url_for("index"))
 
-    qs = session["questions"]
+    quiz = session["quiz"]
 
-    rnd = session["round"]
+    score = session["score"]
+    correct_count = session["correct"]
+    wrong_count = session["wrong"]
 
-    qs = [
-        q for q in questions
-        if q["回数"] == rnd
-    ]
-
-    # 番号順に並べる
-    qs.sort(key=lambda x: int(x["番号"]))
-
-    order = session["order"]
-    idx = session["index"]
-
-    if idx >= len(order):
-
-        total = session["correct"] + session["wrong"]
+    # 全問終了
+    if len(quiz) == 0:
 
         return render_template(
             "index.html",
             result=True,
-            rounds=sorted(
-                {q["回数"] for q in questions},
-                key=lambda x: int(x)
-            ),
-            score=session["score"],
-            correct=session["correct"],
-            wrong=session["wrong"],
-            total=total
+            score=score,
+            correct=correct_count,
+            wrong=wrong_count,
+            total=session["total"],
+            rounds=[]
         )
 
-    number = order[idx]
-
-    current = next(
-        q for q in qs
-        if q["番号"] == number
-    )
+    current = quiz[0]
 
     if request.method == "POST":
 
-        current = qs.pop(0)
-        session["questions"] = qs
+        ans = request.form["answer"].strip()
+        correct = current["答え"]
 
         if ans == correct:
 
-            session["score"] += 5
-            session["correct"] += 1
+            score += 5
+            correct_count += 1
 
-            message = f"〇 正解！　正解：{correct}"
+            session["score"] = score
+            session["correct"] = correct_count
+
+            message = f"〇 正解！ 正解：{correct}"
 
         else:
 
-            session["wrong"] += 1
+            wrong_count += 1
 
-            message = f"× 不正解　正解：{correct}"
+            session["wrong"] = wrong_count
 
-        session["index"] += 1
+            message = f"× 不正解 正解：{correct}"
 
-        idx = session["index"]
+        # 今の問題を削除
+        quiz.pop(0)
 
-        if idx >= len(order):
+        session["quiz"] = quiz
 
-            total = session["correct"] + session["wrong"]
+        # 全問終了
+        if len(quiz) == 0:
 
             return render_template(
                 "index.html",
                 result=True,
-                rounds=sorted(
-                    {q["回数"] for q in questions},
-                    key=lambda x: int(x)
-                ),
                 score=session["score"],
                 correct=session["correct"],
                 wrong=session["wrong"],
-                total=total,
-                message=message
+                total=session["total"],
+                message=message,
+                rounds=[]
             )
 
-        number = order[idx]
-
-        current = next(
-            q for q in qs
-            if q["番号"] == number
-        )
+        current = quiz[0]
 
         return render_template(
             "index.html",
             playing=True,
-            rounds=sorted(
-                {q["回数"] for q in questions},
-                key=lambda x: int(x)
-            ),
             current=current,
             score=session["score"],
-            left=len(order)-idx,
-            message=message
+            left=len(quiz),
+            message=message,
+            rounds=[]
         )
 
     return render_template(
         "index.html",
         playing=True,
-        rounds=sorted(
-            {q["回数"] for q in questions},
-            key=lambda x: int(x)
-        ),
         current=current,
         score=session["score"],
-        left=len(order)-idx
+        left=len(quiz),
+        rounds=[]
     )
 
 
