@@ -42,6 +42,8 @@ def quiz():
         return redirect(url_for("index"))
     qs=session["questions"]
     score=session["score"]
+    session["correct"] = 0
+    session["wrong"] = 0
     if not qs:
         return render_template("index.html", rounds=[str(i) for i in range(1,16)],
                                result=True, score=score, total=session["total"])
@@ -51,16 +53,19 @@ def quiz():
         correct= current["答え"]
         if ans==correct:
             score+=5
+            session["correct"] += 1
             session["score"]=score
             msg=f"〇 正解！ 正解：{correct}"
         else:
+            session["wrong"] += 1
             msg=f"× 不正解 正解：{correct}"
         qs.pop(0)
         session["questions"]=qs
         if not qs:
             return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
                                                         ],
-                                   result=True, score=score, total=session["total"], message=msg)
+                                   result=True, score=score, total=session["total"], message=msg)correct=session["correct"],wrong=session["wrong"]
+            
         current=qs[0]
         return render_template("index.html", rounds=[str(i) for i in range(1,15),rounds.append("404")
                                                     ],
