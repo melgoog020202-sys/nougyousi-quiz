@@ -33,7 +33,8 @@ def index():
         session["total"]=len(qs)
         session["questions"]=qs
         return redirect(url_for("quiz"))
-    rounds=[str(i) for i in range(1,16)]
+    rounds=[str(i) for i in range(1,15)]
+    rounds.append("404")
     return render_template("index.html", rounds=rounds)
 
 @app.route("/quiz", methods=["GET","POST"])
