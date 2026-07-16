@@ -19,10 +19,11 @@ def load_questions():
 
     return df.to_dict(orient="records")
 
-questions = load_questions()
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+
+    questions = load_questions()
 
     rounds = sorted(
         {q["回数"] for q in questions},
@@ -63,6 +64,8 @@ def quiz():
     if "round" not in session:
         return redirect(url_for("index"))
 
+    questions = load_questions()
+
     rnd = session["round"]
 
     qs = [
@@ -99,7 +102,8 @@ def quiz():
         q for q in qs
         if q["番号"] == number
     )
-        if request.method == "POST":
+
+    if request.method == "POST":
 
         ans = request.form["answer"].strip()
         correct = current["答え"].strip()
