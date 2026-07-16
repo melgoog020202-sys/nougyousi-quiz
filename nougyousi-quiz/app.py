@@ -19,44 +19,47 @@ def load_questions():
 
     return df.to_dict(orient="records")
 
-
-questions = load_questions()
-
 @app.route("/", methods=["GET", "POST"])
 def index():
 
-
-    rounds = sorted(
-        {q["回数"] for q in questions},
-        key=lambda x: int(x)
-    )
-
     if request.method == "POST":
+
+        questions = load_questions()   # ←ここだけで読む
+
+        rounds = sorted(
+            {q["回数"] for q in questions if q["回数"].strip()},
+            key=int
+        )
 
         rnd = request.form["round"].strip()
 
-        # 選択した回だけ取得
-        qs = [q for q in questions if q["回数"] == rnd]
+        qs = [
+            q.copy()
+            for q in questions
+            if q["回数"] == rnd
+        ]
 
-        # 問題番号だけシャッフル
-        order = [q["番号"] for q in qs]
-        random.shuffle(order)
+        random.shuffle(qs)
 
         session.clear()
 
         session["round"] = rnd
-        session["order"] = order
-        session["index"] = 0
+        session["questions"] = qs      # ←この回だけ保存
         session["score"] = 0
         session["correct"] = 0
         session["wrong"] = 0
 
         return redirect(url_for("quiz"))
 
-    return render_template(
-        "index.html",
-        rounds=rounds
+    # タイトル画面だけ回数一覧を取得
+    questions = load_questions()
+
+    rounds = sorted(
+        {q["回数"] for q in questions if q["回数"].strip()},
+        key=int
     )
+
+    return render_template("index.html", rounds=rounds)
 
 
 @app.route("/quiz", methods=["GET", "POST"])
@@ -65,7 +68,7 @@ def quiz():
     if "round" not in session:
         return redirect(url_for("index"))
 
-    questions = load_questions()
+    qs = session["questions"]
 
     rnd = session["round"]
 
@@ -106,8 +109,8 @@ def quiz():
 
     if request.method == "POST":
 
-        ans = request.form["answer"].strip()
-        correct = current["答え"].strip()
+        current = qs.pop(0)
+        session["questions"] = qs
 
         if ans == correct:
 
