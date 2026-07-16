@@ -20,10 +20,11 @@ def load_questions():
     return df.to_dict(orient="records")
 
 
+questions = load_questions()
+
 @app.route("/", methods=["GET", "POST"])
 def index():
 
-    questions = load_questions()
 
     rounds = sorted(
         {q["回数"] for q in questions},
